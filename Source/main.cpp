@@ -60,6 +60,7 @@ struct Shape{
 struct Material
 {
     GLuint diffuse_tex;
+    int discard;
 };
 
 class Scene{
@@ -89,6 +90,7 @@ GLint um4p_location;        // id of the texture
 GLint tex_color_location;
 GLint skybox_location;
 GLint view_matrix_location;
+GLint discard_location;
 
 Scene *sceneNow;
 
@@ -174,6 +176,7 @@ Scene* LoadSceneByAssimp(const char *objPath, const char *texPath){
             // load width, height and data from texturePath.C_Str();
 
             TextureData texture = loadPNG(path.C_Str());
+            
             glActiveTexture(GL_TEXTURE0);
             glGenTextures(1, &my_material.diffuse_tex);
             glBindTexture(GL_TEXTURE_2D, my_material.diffuse_tex);
@@ -317,12 +320,12 @@ void My_Init()
     um4mv_location = glGetUniformLocation(program, "um4mv");
     um4p_location = glGetUniformLocation(program, "um4p");
     tex_color_location = glGetUniformLocation(program, "tex_color");
-    
+    discard_location = glGetUniformLocation(program, "needDiscard");
     
     sceneNow = LoadSceneByAssimp("../Executable/Medieval/Medieval_City.obj", "../Executable/Medieval/");
     
-    cameraPos = vec3(0.0f, 5.0f, 0.0f);
-    cameraFront = vec3(-1.0f, 0.0f, 0.0f);
+    cameraPos = vec3(-10.0f, 41.0f, 0.0f);
+    cameraFront = vec3(1.0f, 0.0f, 0.0f);
     cameraUp = vec3(0.0f, 1.0f, 0.0f);
     
     vector<const GLchar*> faces;
@@ -360,6 +363,7 @@ void My_Display()
     for(int i = 0; i < sceneNow->shapes.size(); i++){
         glBindVertexArray(sceneNow->shapes[i].vao);
         int materialID = sceneNow->shapes[i].materialID;
+
         glBindTexture(GL_TEXTURE_2D, sceneNow->materials[materialID].diffuse_tex);
         glDrawElements(GL_TRIANGLES, sceneNow->shapes[i].drawCount, GL_UNSIGNED_INT, 0);
     }

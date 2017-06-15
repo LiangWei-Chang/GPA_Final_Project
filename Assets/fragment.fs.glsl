@@ -4,6 +4,7 @@ layout(location = 0) out vec4 fragColor;
 
 uniform mat4 um4mv;
 uniform mat4 um4p;
+uniform int needDiscard;
 
 in VertexData
 {
@@ -17,6 +18,9 @@ uniform sampler2D tex_color;
 
 void main()
 {
-    vec3 texColor = texture(tex_color, vertexData.texcoord);
-    fragColor = vec4(texColor, 1.0);
+    vec4 texColor = texture(tex_color, vertexData.texcoord);
+    if(texColor.a < 0.5)
+    	discard;
+    else
+    	fragColor = texColor;
 }
