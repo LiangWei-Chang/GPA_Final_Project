@@ -3,6 +3,7 @@
 #define MENU_TIMER_START 1
 #define MENU_TIMER_STOP 2
 #define MENU_EXIT 3
+#define MAX_PARTICLE 1000
 
 GLubyte timer_cnt = 0;
 bool timer_enabled = true;
@@ -77,16 +78,44 @@ public:
     }
 };
 
+typedef struct {
+    // Life
+    bool alive;	// is the particle alive?
+    float life;	// particle lifespan
+    float fade; // decay
+    // color
+    float red;
+    float green;
+    float blue;
+    // Position/direction
+    float xpos;
+    float ypos;
+    float zpos;
+    // Velocity/Direction, only goes down in y dir
+    float vel;
+    // Gravity
+    float gravity;
+    
+    GLuint vao;
+    GLuint buffer;
+    
+}particles;
+
+particles par_sys[MAX_PARTICLE];
+
 mat4 mv_matrix;
 mat4 proj_matrix;
 mat4 rotation;
 mat4 translation;
 GLuint program;
 GLuint skybox_program;
+GLuint rain_program;
 GLuint cubemapTexture;
 GLuint skyboxVAO;
 GLint um4mv_location;       // id of mvp
 GLint um4p_location;        // id of the texture
+GLint um4mv_location_rain;
+GLint um4p_location_rain;
 GLint tex_color_location;
 GLint skybox_location;
 GLint view_matrix_location;
@@ -103,6 +132,7 @@ int lastX, lastY;
 bool pressed = false;
 map<pair<float, float>, float> zPosiotion;
 map<pair<float, float>, int> numCount;
+float slowdown = 2.0;
 
 // load a png image and return a TextureData structure with raw data
 // not limited to png format. works with any image format that is RGBA-32bit
@@ -285,6 +315,68 @@ Scene* LoadSceneByAssimp(const char *objPath, const char *texPath){
     return scene_datas;
 }
 
+// Initialize/Reset Particles - give them their attributes
+void initParticles(int i) {
+    par_sys[i].alive = true;
+    par_sys[i].life = 1.0;
+    par_sys[i].fade = float(rand()%100)/1000.0f+0.003f;
+    
+    par_sys[i].xpos = (float) (rand() % 21) - 10;
+    par_sys[i].ypos = 45.0;
+    par_sys[i].zpos = (float) (rand() % 21) - 10;
+    
+    par_sys[i].red = 0.5;
+    par_sys[i].green = 0.5;
+    par_sys[i].blue = 1.0;
+    
+    par_sys[i].vel = 0;
+    par_sys[i].gravity = -0.8;
+    
+    glGenVertexArrays(1, &par_sys[i].vao);
+    glGenBuffers(1, &par_sys[i].buffer);
+}
+
+void drawRain() {
+    float x, y, z;
+    for (int loop = 0; loop < MAX_PARTICLE; loop=loop+2) {
+        if (par_sys[loop].alive == true) {
+            x = par_sys[loop].xpos;
+            y = par_sys[loop].ypos;
+            z = par_sys[loop].zpos;
+            
+            float data[12] = {x, y, z};
+            data[3] = x; data[4] = y+0.5; data[5] = z;
+            data[6] = par_sys[loop].red; data[7] = par_sys[loop].green; data[8] = par_sys[loop].blue;
+            data[9] = par_sys[loop].red; data[10] = par_sys[loop].green; data[11] = par_sys[loop].blue;
+            
+            // Draw particles
+            glEnable(GL_LINE_SMOOTH);
+            glBindVertexArray(par_sys[loop].vao);
+            glBindBuffer(GL_ARRAY_BUFFER, par_sys[loop].buffer);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), 0);
+            glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)(6*sizeof(float)));
+            glLineWidth(10);
+            glDrawArrays(GL_LINES, 0, 2);
+            glDisable(GL_LINE_SMOOTH);
+            
+            // Adjust slowdown for speed!
+            par_sys[loop].ypos += par_sys[loop].vel / (slowdown*1000);
+            par_sys[loop].vel += par_sys[loop].gravity;
+            // Decay
+            par_sys[loop].life -= par_sys[loop].fade;
+            
+            if (par_sys[loop].ypos <= -10) {
+                par_sys[loop].life = -1.0;
+            }
+            //Revive
+            if (par_sys[loop].life < 0.0) {
+                initParticles(loop);
+            }
+        }
+    }
+}
+
 void My_Init()
 {
     glClearColor(0.0f, 0.6f, 0.0f, 1.0f);
@@ -309,6 +401,25 @@ void My_Init()
     
     view_matrix_location = glGetUniformLocation(skybox_program, "view_matrix");
     skybox_location = glGetUniformLocation(skybox_program, "tex_cubemap");
+    
+    rain_program = glCreateProgram();
+    vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    vertexShaderSource = loadShaderSource("rain.vs.glsl");
+    fragmentShaderSource = loadShaderSource("rain.fs.glsl");
+    glShaderSource(vertexShader, 1, vertexShaderSource, NULL);
+    glShaderSource(fragmentShader, 1, fragmentShaderSource, NULL);
+    freeShaderSource(vertexShaderSource);
+    freeShaderSource(fragmentShaderSource);
+    glCompileShader(vertexShader);
+    glCompileShader(fragmentShader);
+    glAttachShader(rain_program, vertexShader);
+    glAttachShader(rain_program, fragmentShader);
+    glLinkProgram(rain_program);
+    glUseProgram(rain_program);
+    
+    um4mv_location_rain = glGetUniformLocation(rain_program, "um4mv");
+    um4p_location_rain = glGetUniformLocation(rain_program, "um4p");
     
     program = glCreateProgram();
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -346,6 +457,10 @@ void My_Init()
     faces.push_back("../Executable/mp_crimelem/criminal-element_ft.tga");
     cubemapTexture = loadCubemap(faces);
     
+    // Initialize particles
+    for (int loop = 0; loop < MAX_PARTICLE; loop++) {
+        initParticles(loop);
+    }
 }
 
 void My_Display()
@@ -361,6 +476,11 @@ void My_Display()
     glDisable(GL_DEPTH_TEST);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glEnable(GL_DEPTH_TEST);
+    
+    glUseProgram(rain_program);
+    glUniformMatrix4fv(um4mv_location_rain, 1, GL_FALSE, &mv_matrix[0][0]);
+    glUniformMatrix4fv(um4p_location_rain, 1, GL_FALSE, &proj_matrix[0][0]);
+    drawRain();
     
     glUseProgram(program);
     glUniformMatrix4fv(um4mv_location, 1, GL_FALSE, &mv_matrix[0][0]);
