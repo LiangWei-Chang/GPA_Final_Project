@@ -3,7 +3,9 @@
 #define MENU_TIMER_START 1
 #define MENU_TIMER_STOP 2
 #define MENU_EXIT 3
-#define MAX_PARTICLE 1000
+#define MENU_RAIN_ON 4
+#define MENU_RAIN_OFF 5
+#define MAX_PARTICLE 5000
 
 GLubyte timer_cnt = 0;
 bool timer_enabled = true;
@@ -133,6 +135,7 @@ bool pressed = false;
 map<pair<float, float>, float> zPosiotion;
 map<pair<float, float>, int> numCount;
 float slowdown = 2.0;
+bool startRain = false;
 
 // load a png image and return a TextureData structure with raw data
 // not limited to png format. works with any image format that is RGBA-32bit
@@ -318,12 +321,12 @@ Scene* LoadSceneByAssimp(const char *objPath, const char *texPath){
 // Initialize/Reset Particles - give them their attributes
 void initParticles(int i) {
     par_sys[i].alive = true;
-    par_sys[i].life = 1.0;
+    par_sys[i].life = 3.0;
     par_sys[i].fade = float(rand()%100)/1000.0f+0.003f;
     
-    par_sys[i].xpos = (float) (rand() % 21) - 10;
+    par_sys[i].xpos = (float) (rand() % 101) - 50 + cameraPos.x;
     par_sys[i].ypos = 45.0;
-    par_sys[i].zpos = (float) (rand() % 21) - 10;
+    par_sys[i].zpos = (float) (rand() % 101) - 50 + cameraPos.z;
     
     par_sys[i].red = 0.5;
     par_sys[i].green = 0.5;
@@ -356,6 +359,8 @@ void drawRain() {
             glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), 0);
             glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)(6*sizeof(float)));
+            glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
             glLineWidth(10);
             glDrawArrays(GL_LINES, 0, 2);
             glDisable(GL_LINE_SMOOTH);
@@ -366,7 +371,7 @@ void drawRain() {
             // Decay
             par_sys[loop].life -= par_sys[loop].fade;
             
-            if (par_sys[loop].ypos <= -10) {
+            if (par_sys[loop].ypos <= 40.0f) {
                 par_sys[loop].life = -1.0;
             }
             //Revive
@@ -477,10 +482,12 @@ void My_Display()
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glEnable(GL_DEPTH_TEST);
     
-    glUseProgram(rain_program);
-    glUniformMatrix4fv(um4mv_location_rain, 1, GL_FALSE, &mv_matrix[0][0]);
-    glUniformMatrix4fv(um4p_location_rain, 1, GL_FALSE, &proj_matrix[0][0]);
-    drawRain();
+    if(startRain){
+        glUseProgram(rain_program);
+        glUniformMatrix4fv(um4mv_location_rain, 1, GL_FALSE, &mv_matrix[0][0]);
+        glUniformMatrix4fv(um4p_location_rain, 1, GL_FALSE, &proj_matrix[0][0]);
+        drawRain();
+    }
     
     glUseProgram(program);
     glUniformMatrix4fv(um4mv_location, 1, GL_FALSE, &mv_matrix[0][0]);
@@ -541,7 +548,7 @@ void My_Motion(int x, int y){
 
 void My_Mouse(int button, int state, int x, int y)
 {
-    if(state == GLUT_DOWN)
+    if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
     {
         lastX = x;
         lastY = y;
@@ -645,6 +652,12 @@ void My_Menu(int id)
         case MENU_TIMER_STOP:
             timer_enabled = false;
             break;
+        case MENU_RAIN_ON:
+            startRain = true;
+            break;
+        case MENU_RAIN_OFF:
+            startRain = false;
+            break;
         case MENU_EXIT:
             exit(0);
             break;
@@ -678,14 +691,20 @@ int main(int argc, char *argv[])
     // Create a menu and bind it to mouse right button.
     int menu_main = glutCreateMenu(My_Menu);
     int menu_timer = glutCreateMenu(My_Menu);
+    int menu_rain = glutCreateMenu(My_Menu);
     
     glutSetMenu(menu_main);
     glutAddSubMenu("Timer", menu_timer);
+    glutAddSubMenu("Rain", menu_rain);
     glutAddMenuEntry("Exit", MENU_EXIT);
     
     glutSetMenu(menu_timer);
     glutAddMenuEntry("Start", MENU_TIMER_START);
     glutAddMenuEntry("Stop", MENU_TIMER_STOP);
+    
+    glutSetMenu(menu_rain);
+    glutAddMenuEntry("On", MENU_RAIN_ON);
+    glutAddMenuEntry("Off", MENU_RAIN_OFF);
     
     glutSetMenu(menu_main);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
