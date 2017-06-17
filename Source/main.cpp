@@ -94,13 +94,15 @@ GLint discard_location;
 
 Scene *sceneNow;
 
-const float cameraSpeed = 1.0f;
+const float cameraSpeed = 0.1f;
 float up_angle = 0.0f, left_right = 0.0f;
 vec3 cameraPos;
 vec3 cameraFront;
 vec3 cameraUp;
 int lastX, lastY;
 bool pressed = false;
+map<pair<float, float>, float> zPosiotion;
+map<pair<float, float>, int> numCount;
 
 // load a png image and return a TextureData structure with raw data
 // not limited to png format. works with any image format that is RGBA-32bit
@@ -203,6 +205,13 @@ Scene* LoadSceneByAssimp(const char *objPath, const char *texPath){
                 positions[v * 3] = mesh->mVertices[v][0];
                 positions[v * 3 + 1] = mesh->mVertices[v][1];
                 positions[v * 3 + 2] = mesh->mVertices[v][2];
+                float nextX = (int)(positions[v*3]*10)/10.0;
+                float nextY = (int)(positions[v*3+2]*10)/10.0;
+
+                if(positions[v * 3 + 1] > zPosiotion[make_pair(nextX, nextY)]){
+                    zPosiotion[make_pair(nextX, nextY)] = positions[v*3+1];
+                    numCount[make_pair(nextX, nextY)]++;
+                }
             }
             
             glGenBuffers(1, &shape.vbo_position);
@@ -428,17 +437,31 @@ void My_Keyboard(unsigned char key, int x, int y)
 {
     switch (key) {
         case 'w':
-            cameraPos += cameraSpeed * cameraFront;
+        {
+            vec3 temp = cameraPos + vec3((cameraSpeed * cameraFront).x, 0.0f, (cameraSpeed * cameraFront).z);
+            temp = vec3((int)(temp.x*10)/10.0, (int)(temp.y*10)/10.0, (int)(temp.z*10)/10.0);
+            cout << "Next Height = " << zPosiotion[make_pair(temp.x, temp.z)] << endl;
+            cout << "Next Pos = (" << temp.x << ", " << temp.z << ")\n";
+            if(zPosiotion[make_pair(temp.x, temp.z)] - temp.y <= 1.0f && numCount[make_pair(temp.x, temp.z)] <= 10)
+                cameraPos += vec3((cameraSpeed * cameraFront).x, 0.0f, (cameraSpeed * cameraFront).z);
             break;
+        }
         case 's':
-            cameraPos -= cameraSpeed * cameraFront;
+            cameraPos -= vec3((cameraSpeed * cameraFront).x, 0.0f, (cameraSpeed * cameraFront).z);
             break;
         case 'a':
-            cameraPos -= normalize(cross(cameraFront, cameraUp)) * cameraSpeed;
+        {
+            vec3 temp = normalize(cross(cameraFront, cameraUp)) * cameraSpeed;
+            cameraPos -= vec3(temp.x, 0.0f, temp.z);
             break;
+        }
         case 'd':
-            cameraPos += normalize(cross(cameraFront, cameraUp)) * cameraSpeed;
+        {
+            vec3 temp = normalize(cross(cameraFront, cameraUp)) * cameraSpeed;
+            cameraPos += vec3(temp.x, 0.0f, temp.z);
             break;
+        }
+
         case 'z':
         {
             up_angle += 1;
