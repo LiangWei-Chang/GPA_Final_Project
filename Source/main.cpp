@@ -5,6 +5,8 @@
 #define MENU_EXIT 3
 #define MENU_RAIN_ON 4
 #define MENU_RAIN_OFF 5
+#define MENU_FOG_ON 6
+#define MENU_FOG_OFF 7
 #define MAX_PARTICLE 5000
 
 GLubyte timer_cnt = 0;
@@ -122,6 +124,7 @@ GLint tex_color_location;
 GLint skybox_location;
 GLint view_matrix_location;
 GLint discard_location;
+GLint fogOn_location;
 
 Scene *sceneNow;
 
@@ -136,6 +139,7 @@ map<pair<float, float>, float> zPosiotion;
 map<pair<float, float>, int> numCount;
 float slowdown = 2.0;
 bool startRain = false;
+int fogOn = 0;
 
 // load a png image and return a TextureData structure with raw data
 // not limited to png format. works with any image format that is RGBA-32bit
@@ -425,6 +429,7 @@ void My_Init()
     
     um4mv_location_rain = glGetUniformLocation(rain_program, "um4mv");
     um4p_location_rain = glGetUniformLocation(rain_program, "um4p");
+	
     
     program = glCreateProgram();
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -446,6 +451,7 @@ void My_Init()
     um4p_location = glGetUniformLocation(program, "um4p");
     tex_color_location = glGetUniformLocation(program, "tex_color");
     discard_location = glGetUniformLocation(program, "needDiscard");
+	fogOn_location = glGetUniformLocation(program, "fogOn");
     
     sceneNow = LoadSceneByAssimp("../Executable/Medieval/Medieval_City.obj", "../Executable/Medieval/");
     
@@ -493,6 +499,7 @@ void My_Display()
     glUniformMatrix4fv(um4mv_location, 1, GL_FALSE, &mv_matrix[0][0]);
     glUniformMatrix4fv(um4p_location, 1, GL_FALSE, &proj_matrix[0][0]);
     glUniform1i(tex_color_location, 0);
+	glUniform1i(fogOn_location, fogOn);
     
     mv_matrix = lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
     
@@ -658,6 +665,12 @@ void My_Menu(int id)
         case MENU_RAIN_OFF:
             startRain = false;
             break;
+		case MENU_FOG_ON:
+			fogOn = 1;
+			break;
+		case MENU_FOG_OFF:
+			fogOn = 0;
+			break;
         case MENU_EXIT:
             exit(0);
             break;
@@ -692,19 +705,29 @@ int main(int argc, char *argv[])
     int menu_main = glutCreateMenu(My_Menu);
     int menu_timer = glutCreateMenu(My_Menu);
     int menu_rain = glutCreateMenu(My_Menu);
+	int menu_fog = glutCreateMenu(My_Menu);
     
     glutSetMenu(menu_main);
     glutAddSubMenu("Timer", menu_timer);
+	glutAddSubMenu("Fog", menu_fog);
     glutAddSubMenu("Rain", menu_rain);
+	
     glutAddMenuEntry("Exit", MENU_EXIT);
+	
     
     glutSetMenu(menu_timer);
     glutAddMenuEntry("Start", MENU_TIMER_START);
     glutAddMenuEntry("Stop", MENU_TIMER_STOP);
+
+	glutSetMenu(menu_fog);
+	glutAddMenuEntry("On", MENU_FOG_ON);
+	glutAddMenuEntry("Off", MENU_FOG_OFF);
     
     glutSetMenu(menu_rain);
     glutAddMenuEntry("On", MENU_RAIN_ON);
     glutAddMenuEntry("Off", MENU_RAIN_OFF);
+
+	
     
     glutSetMenu(menu_main);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
