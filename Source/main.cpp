@@ -485,7 +485,7 @@ void My_Display()
     glUseProgram(skybox_program);
     glBindVertexArray(skyboxVAO);
     
-    glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, &view_matrix[0][0]);
+    glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, value_ptr( view_matrix));
 	glUniform1i(skybox_fogOn_location, fogOn);
     glDisable(GL_DEPTH_TEST);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
