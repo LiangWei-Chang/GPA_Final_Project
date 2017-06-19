@@ -37,6 +37,8 @@
 		D67EA5B71EF284AB0038F6A1 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = ../../../../../../../System/Library/Frameworks/GLUT.framework; sourceTree = "<group>"; };
 		D67EA5B81EF284AB0038F6A1 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = ../../../../../../../System/Library/Frameworks/OpenGL.framework; sourceTree = "<group>"; };
 		D67EA5BB1EF2863E0038F6A1 /* header_only.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = header_only.cpp; path = ../Source/header_only.cpp; sourceTree = "<group>"; };
+		D6DE8FC81EF7B18C0041F0D5 /* fragment.fs.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = fragment.fs.glsl; path = ../Assets/fragment.fs.glsl; sourceTree = "<group>"; };
+		D6DE8FC91EF7B18C0041F0D5 /* vertex.vs.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = vertex.vs.glsl; path = ../Assets/vertex.vs.glsl; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +60,8 @@
 		D6619EFD1EF2824D00DE5224 = {
 			isa = PBXGroup;
 			children = (
+				D6DE8FC81EF7B18C0041F0D5 /* fragment.fs.glsl */,
+				D6DE8FC91EF7B18C0041F0D5 /* vertex.vs.glsl */,
 				D67EA5BB1EF2863E0038F6A1 /* header_only.cpp */,
 				D624748B1EF283D900326E02 /* main.cpp */,
 				D67EA5B01EF284210038F6A1 /* Frameworks */,

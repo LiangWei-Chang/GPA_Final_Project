@@ -65,7 +65,6 @@ struct Shape{
 struct Material
 {
     GLuint diffuse_tex;
-    int discard;
 };
 
 class Scene{
@@ -123,7 +122,6 @@ GLint um4p_location_rain;
 GLint tex_color_location;
 GLint skybox_location;
 GLint view_matrix_location;
-GLint discard_location;
 GLint map_fogOn_location;
 GLint skybox_fogOn_location;
 
@@ -452,7 +450,6 @@ void My_Init()
     um4mv_location = glGetUniformLocation(program, "um4mv");
     um4p_location = glGetUniformLocation(program, "um4p");
     tex_color_location = glGetUniformLocation(program, "tex_color");
-    discard_location = glGetUniformLocation(program, "needDiscard");
 	map_fogOn_location = glGetUniformLocation(program, "fogOn");
     
     sceneNow = LoadSceneByAssimp("../Executable/Medieval/Medieval_City.obj", "../Executable/Medieval/");
