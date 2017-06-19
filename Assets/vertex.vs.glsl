@@ -7,7 +7,7 @@ uniform mat4 um4mv;
 uniform mat4 um4p;
 
 const float density = 0.1f;
-const float gradient = 1.5f;
+const float gradient = 1.25f;
 
 out VertexData
 {
@@ -26,7 +26,7 @@ void main()
     vertexData.texcoord = iv2tex_coord;
 
 	float distance = length(position2Camera.xyz);
-	visibility = exp(-pow((distance * density), gradient));
+	visibility = exp(-pow(((distance + 10) * density), gradient));
 	visibility = clamp(visibility, 0.0f, 1.0f);
 	visibility = 1.0f - visibility;
 }
