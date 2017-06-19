@@ -124,7 +124,8 @@ GLint tex_color_location;
 GLint skybox_location;
 GLint view_matrix_location;
 GLint discard_location;
-GLint fogOn_location;
+GLint map_fogOn_location;
+GLint skybox_fogOn_location;
 
 Scene *sceneNow;
 
@@ -410,6 +411,7 @@ void My_Init()
     
     view_matrix_location = glGetUniformLocation(skybox_program, "view_matrix");
     skybox_location = glGetUniformLocation(skybox_program, "tex_cubemap");
+	skybox_fogOn_location = glGetUniformLocation(skybox_program, "fogOn");
     
     rain_program = glCreateProgram();
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -451,7 +453,7 @@ void My_Init()
     um4p_location = glGetUniformLocation(program, "um4p");
     tex_color_location = glGetUniformLocation(program, "tex_color");
     discard_location = glGetUniformLocation(program, "needDiscard");
-	fogOn_location = glGetUniformLocation(program, "fogOn");
+	map_fogOn_location = glGetUniformLocation(program, "fogOn");
     
     sceneNow = LoadSceneByAssimp("../Executable/Medieval/Medieval_City.obj", "../Executable/Medieval/");
     
@@ -484,6 +486,7 @@ void My_Display()
     glBindVertexArray(skyboxVAO);
     
     glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, &view_matrix[0][0]);
+	glUniform1i(skybox_fogOn_location, fogOn);
     glDisable(GL_DEPTH_TEST);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glEnable(GL_DEPTH_TEST);
@@ -499,7 +502,7 @@ void My_Display()
     glUniformMatrix4fv(um4mv_location, 1, GL_FALSE, &mv_matrix[0][0]);
     glUniformMatrix4fv(um4p_location, 1, GL_FALSE, &proj_matrix[0][0]);
     glUniform1i(tex_color_location, 0);
-	glUniform1i(fogOn_location, fogOn);
+	glUniform1i(map_fogOn_location, fogOn);
     
     mv_matrix = lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
     
