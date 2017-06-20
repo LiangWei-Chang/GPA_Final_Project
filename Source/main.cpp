@@ -459,12 +459,12 @@ void My_Init()
     cameraUp = vec3(0.0f, 1.0f, 0.0f);
     
     vector<const GLchar*> faces;
-    faces.push_back("../Executable/mp_crimelem/criminal-element_rt.tga");
-    faces.push_back("../Executable/mp_crimelem/criminal-element_lf.tga");
-    faces.push_back("../Executable/mp_crimelem/criminal-element_dn.tga");
-    faces.push_back("../Executable/mp_crimelem/criminal-element_up.tga");
-    faces.push_back("../Executable/mp_crimelem/criminal-element_bk.tga");
-    faces.push_back("../Executable/mp_crimelem/criminal-element_ft.tga");
+    faces.push_back("../Executable/mp_drakeq/drakeq_rt.tga");
+    faces.push_back("../Executable/mp_drakeq/drakeq_lf.tga");
+    faces.push_back("../Executable/mp_drakeq/drakeq_dn.tga");
+    faces.push_back("../Executable/mp_drakeq/drakeq_up.tga");
+    faces.push_back("../Executable/mp_drakeq/drakeq_bk.tga");
+    faces.push_back("../Executable/mp_drakeq/drakeq_ft.tga");
     cubemapTexture = loadCubemap(faces);
     
     // Initialize particles
@@ -477,12 +477,12 @@ void My_Display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    mat4 view_matrix = lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+    mat4 view_matrix = lookAt(cameraPos, cameraPos + vec3(-cameraFront.x, cameraFront.y, cameraFront.z), cameraUp);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
     glUseProgram(skybox_program);
     glBindVertexArray(skyboxVAO);
     
-    glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, value_ptr( view_matrix));
+    glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, value_ptr(view_matrix));
 	glUniform1i(skybox_fogOn_location, fogOn);
     glDisable(GL_DEPTH_TEST);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
